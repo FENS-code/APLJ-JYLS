@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>APLJ吉运灵数 · 每日幸运号码</title>
+
+  <!-- Pyodide（浏览器里跑 Python；无需后端） -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
+
+  <!-- 玄学风全站样式 -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- 背景祥云与暗纹 -->
+  <div class="bg-aura"></div>
+
+  <header class="site-header">
+    <div class="logo">
+      <!-- 八卦 + 灵气 -->
+      <svg viewBox="0 0 24 24" class="bagua" aria-hidden="true">
+        <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <circle cx="12" cy="8.2" r="2.4" fill="currentColor"/>
+        <circle cx="12" cy="15.8" r="2.4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M12 2.2v3.2M12 18.6v3.2M2.2 12h3.2M18.6 12h3.2M4.3 4.3l2.6 2.6M17.1 17.1l2.6 2.6M4.3 19.7l2.6-2.6M17.1 6.9l2.6-2.6" stroke="currentColor" stroke-width="1.1"/>
+      </svg>
+      <span class="brand">APLJ 吉运灵数</span>
+    </div>
+    <p class="tagline">以生辰为引，取当日灵数 · 福至心至</p>
+  </header>
+
+  <main class="card card-main auspicious-border">
+    <h1>🍀 每日幸运号码</h1>
+    <p class="muted">输入生日（公历），今日灵数将以「生日 + 今日日期」为因，生成 <b>四位组合</b>（0000–9999）。同一日内对同一生日结果固定，次日更新。</p>
+
+    <div class="divider"><span class="spark"></span></div>
+
+    <div class="form">
+      <label for="dob">你的生日：</label>
+      <input id="dob" type="date" placeholder="YYYY-MM-DD" />
+      <button id="run" class="btn-gold">占数推演</button>
+    </div>
+
+    <div id="result" class="result">请输入生日后占数。</div>
+
+    <p class="tip">小贴士：结果只作参考，心诚则灵，行善聚福。</p>
+  </main>
+
+  <!-- 广告位（玄学风） -->
+  <section id="ad-slot" aria-label="吉运招财广告位">
+    <div class="ad-head">
+      <span class="ad-head-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.3"/>
+          <circle cx="12" cy="8.5" r="2.5" fill="currentColor"/><circle cx="12" cy="15.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.2 4.2l2.8 2.8M17 17l2.8 2.8M4.2 19.8l2.8-2.8M17 7l2.8-2.8" stroke="currentColor" stroke-width="1.2"/></svg>
+      </span>
+      <span>吉运招财 · 赞助</span>
+    </div>
+
+    <div class="ad-container auspicious-border">
+      <a id="ad-link" href="#" target="_blank" rel="noopener nofollow sponsored">
+        <img id="ad-img" alt="赞助广告" loading="lazy" />
+        <span class="yun yun-tl" aria-hidden="true"></span>
+        <span class="yun yun-br" aria-hidden="true"></span>
+      </a>
+    </div>
+    <div class="ad-dots" id="ad-dots"></div>
+  </section>
+
+  <!-- 业务脚本：加载 Pyodide + 调用 Python + 广告引擎 -->
+  <script>
+    // ===== Python（Pyodide）部分 =====
+    let pyodide, gen_numbers;
+
+    function todayISO() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    }
+
+    async function bootPy() {
+      pyodide = await loadPyodide({ indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.2/full/" });
+      const code = await fetch("main.py").then(r => r.text());
+      await pyodide.runPythonAsync(code);
+      gen_numbers = pyodide.globals.get('gen_numbers');
+      document.getElementById('result').textContent = "灵数引擎正常启动 ✅ 请输入您的生日以获得四个真字";
+    }
+
+    async function onRun() {
+      const out = document.getElementById('result');
+      const dob = document.getElementById('dob').value.trim();
+      if (!dob) {
+        out.innerHTML = "<span class='bad'>请先选择有效的生日（YYYY-MM-DD）。</span>";
+        return;
+      }
+      try {
+        const resProxy = gen_numbers(dob, todayISO());
+        const res = resProxy.toJs(); resProxy.destroy();
+        if (res.error) {
+          out.innerHTML = `<span class='bad'>${res.error}</span>`;
+          return;
+        }
+        // 数字滚动入场
+        out.innerHTML =
+          `生日：<b>${res.dob}</b><br>` +
+          `今天：<b>${res.today}</b><br>` +
+          `今日灵数：<span class='good roll'>${res.number}</span>`;
+        requestAnimationFrame(() => out.querySelector('.roll')?.classList.add('on'));
+      } catch (e) {
+        console.error(e);
+        out.innerHTML = "<span class='bad'>运行出错，请查看浏览器控制台。</span>";
+      }
+    }
+
+    document.getElementById('run').addEventListener('click', onRun);
+    bootPy();
+
+    // ===== 广告引擎（ads.json 驱动）=====
+    const ADS_JSON_URL = "ads.json";
+    const ROTATE_MS = 6000;
+    const $img = document.getElementById('ad-img');
+    const $link = document.getElementById('ad-link');
+    const $dots = document.getElementById('ad-dots');
+    let ads = [], timer=null, idx=0;
+
+    function isActive(ad, now=new Date()){const a=!ad.start||new Date(ad.start)<=now; const b=!ad.end||now<=new Date(ad.end); return a&&b}
+    function pickList(raw){const act=raw.filter(isActive); if(!act.length)return[]; const out=[]; for(const ad of act){const w=Math.max(1,Number(ad.weight||1)); for(let i=0;i<w;i++)out.push(ad)} return out}
+    function renderDotBar(n,active){$dots.innerHTML=""; for(let i=0;i<n;i++){const d=document.createElement('button'); d.className="ad-dot"+(i===active?" on":""); d.setAttribute('aria-label','切换到广告 '+(i+1)); d.onclick=()=>switchTo(i); $dots.appendChild(d)}}
+    function switchTo(i){
+  if(!ads.length) return;
+  idx = (i + ads.length) % ads.length;
+  const ad = ads[idx];
+  const url = new URL(ad.href, location.href);
+  url.searchParams.set('ref', location.host);
+  url.searchParams.set('ad', ad.id || idx);
+
+  const box = document.querySelector('.ad-container');
+  box.classList.remove('glow'); 
+  void box.offsetWidth; 
+  box.classList.add('glow');
+
+  if (ad.type === 'text') {
+    // 文本横幅模式
+    $link.href = url.toString();
+    $link.innerHTML = `
+      <div class="ad-text-banner">
+        <div class="ad-title">${ad.title || ''}</div>
+        <div class="ad-subtitle">${ad.subtitle || ''}</div>
+        <span class="yun yun-tl" aria-hidden="true"></span>
+        <span class="yun yun-br" aria-hidden="true"></span>
+      </div>`;
+  } else {
+    // 图片横幅模式
+    $link.href = url.toString();
+    $link.innerHTML = `
+      <img id="ad-img" src="${ad.img}" alt="${ad.alt || '赞助广告'}" />
+      <span class="yun yun-tl" aria-hidden="true"></span>
+      <span class="yun yun-br" aria-hidden="true"></span>`;
+  }
+
+  renderDotBar(ads.length, idx);
+}
+
+    function startLoop(){stopLoop(); timer=setInterval(()=>switchTo(idx+1), ROTATE_MS)}
+    function stopLoop(){if(timer){clearInterval(timer); timer=null}}
+    async function bootAds(){
+      try{const res=await fetch(ADS_JSON_URL,{cache:"no-store"}); const data=await res.json(); ads=pickList(Array.isArray(data)?data:[])}catch(e){ads=[]}
+      if (!ads.length) {ads = [{
+    id: "placeholder",
+    img: "images/ad-placeholder.svg",
+    href: "#",
+    alt: "广告位招租 · 联系我们"
+  }];
+}
+
+      switchTo(0); startLoop();
+      const wrap=document.getElementById('ad-slot'); wrap.addEventListener('mouseenter',stopLoop); wrap.addEventListener('mouseleave',startLoop);
+    }
+    bootAds();
+  </script>
+</body>
+</html>

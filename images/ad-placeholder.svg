@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="240">
+  <defs>
+    <!-- 背景渐变 -->
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#14211b"></stop>
+      <stop offset="100%" stop-color="#0c1511"></stop>
+    </linearGradient>
+    <!-- 光晕 -->
+    <radialGradient id="glow" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="rgba(231,210,143,0.35)"></stop>
+      <stop offset="100%" stop-color="transparent"></stop>
+    </radialGradient>
+  </defs>
+
+  <!-- 背景层 -->
+  <rect width="100%" height="100%" fill="url(#bg)"></rect>
+  <rect width="100%" height="100%" fill="url(#glow)"></rect>
+
+  <!-- 装饰祥云 -->
+  <circle cx="100" cy="70" r="120" fill="rgba(231,210,143,0.18)"></circle>
+  <circle cx="1100" cy="190" r="140" fill="rgba(231,210,143,0.15)"></circle>
+
+  <!-- 文本 -->
+  <g font-family="PingFang SC, Noto Sans SC, Microsoft YaHei, sans-serif" text-anchor="middle">
+    <text x="600" y="120" font-size="54" fill="#e7d28f" style="paint-order:stroke; stroke:#6f6333; stroke-width:2;">
+      广告位招租
+    </text>
+    <text x="600" y="175" font-size="28" fill="#c9ba83">
+      心诚则灵 · 吉祥如意
+    </text>
+  </g>
+
+  <!-- 边框 -->
+  <rect x="6" y="6" width="1188" height="228" rx="14" ry="14" fill="none" stroke="rgba(231,210,143,0.45)" stroke-width="3"></rect>
+</svg>
